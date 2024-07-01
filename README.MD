@@ -1,4 +1,103 @@
 # Learning to Fly in Seconds
+## Instructions to run the code
+### Run in local environment 
+#### Dependencies
+```
+sudo apt update && sudo apt install libhdf5-dev libopenblas-dev protobuf-compiler libprotobuf-dev libboost-all-dev
+```
+
+As an alternative to openblas you can also install [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html) which in our experience is significantly faster than OpenBLAS.
+
+#### Clone repositories
+```
+git clone https://github.com/arplaboratory/learning-to-fly learning_to_fly
+cd learning_to_fly
+```
+
+Then instantiate the `RLtools` submodule:
+```
+git submodule update --init -- external/rl_tools
+cd external/rl_tools
+```
+
+Then instantiate some dependencies of `RLtools` (for conveniences like checkpointing, Tensorboard logging, testing, etc.):
+```
+git submodule update --init -- external/cli11 external/highfive external/json/ external/tensorboard tests/lib/googletest/
+```
+
+#### Build
+Going back to the main directory (`learning_to_fly`), we can now configure the build of the code:
+```
+cd ../../
+mkdir build && cd build
+```
+- Ubuntu + OpenBLAS: `cmake .. -DCMAKE_BUILD_TYPE=Release -DRL_TOOLS_BACKEND_ENABLE_OPENBLAS:BOOL=ON`
+- Ubuntu + MKL: `cmake .. -DCMAKE_BUILD_TYPE=Release -DRL_TOOLS_BACKEND_ENABLE_MKL:BOOL=ON`
+
+Finally, we can build the targets:
+```
+cmake --build . -j8
+```
+
+#### Run
+After successfully building the targets, we can run the code (in the original directory `learning_to_fly`):
+```
+cd ..
+./build/src/training_headless 
+```
+While this is running, you should be able to see training metrics using Tensorboard
+
+If not already installed:
+```
+python3 -m pip install tensorboard
+```
+Then from the original directory `learning_to_fly`:
+```
+tensorboard --logdir=logs
+```
+
+#### Run with UI
+To run the training with the UI, we download the JavaScript dependencies in the form of the two files `three.module.js` and `OrbitControls.js`:
+```
+cd src/ui
+./get_dependencies.sh
+```
+
+After that we can execute the UI binary from the root folder:
+```
+cd ../../
+./build/src/ui 0.0.0.0 8000
+```
+Now you should be able to navigate to [http://0.0.0.0:8000](http://0.0.0.0:8000) in your browser and start the training.
+
+To run the benchmark (with UI, checkpointing and Tensorboard logging turned off):
+```
+sudo nice -n -20 ./build/src/training_benchmark
+```
+
+### Run in Docker environment
+
+## Deploy trained policies on betaflight
+
+
+## Citing
+When using our code/setup in an academic work please cite our publication using the following Bibtex citation:
+```
+@ARTICLE{eschmann2024learning,
+  author={Eschmann, Jonas and Albani, Dario and Loianno, Giuseppe},
+  journal={IEEE Robotics and Automation Letters}, 
+  title={Learning to Fly in Seconds}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={1-8},
+  keywords={Training;Quadrotors;Taxonomy;Complexity theory;Task analysis;Rotors;Motors;Aerial Systems: Applications;Machine Learning for Robot Control;Reinforcement Learning},
+  doi={10.1109/LRA.2024.3396025}
+}
+```
+
+<details>
+  <summary>Legacy README</summary>
 
 <p align="center">
   <a href="https://arxiv.org/abs/2311.13081">arXiv</a> | <a href="https://doi.org/10.1109/LRA.2024.3396025">IEEE Xplore</a>
@@ -80,85 +179,6 @@ If you would like to benchmark the training speed you can use:
 docker run -it --rm arpllab/learning_to_fly training_benchmark
 ```
 This is the fastest configuration, without logging, UI, checkpointing etc.
-### Native installation
-Clone this repository:
-```
-git clone https://github.com/arplaboratory/learning-to-fly learning_to_fly
-cd learning_to_fly
-```
-Then instantiate the `RLtools` submodule:
-```
-git submodule update --init -- external/rl_tools
-cd external/rl_tools
-```
-
-Then instantiate some dependencies of `RLtools` (for conveniences like checkpointing, Tensorboard logging, testing, etc.):
-```
-git submodule update --init -- external/cli11 external/highfive external/json/ external/tensorboard tests/lib/googletest/
-```
-
-#### Install dependencies on Ubuntu
-```
-sudo apt update && sudo apt install libhdf5-dev libopenblas-dev protobuf-compiler libprotobuf-dev libboost-all-dev
-```
-As an alternative to openblas you can also install [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html) which in our experience is significantly faster than OpenBLAS.
-#### Install dependencies on macOS
-```
-brew install hdf5 protobuf boost
-```
-Please make sure that `brew` links the libraries correctly. If not you might have to link e.g. `protobuf` manually using `brew link protobuf`.
-
-
-
-
-Going back to the main directory (`learning_to_fly`), we can now configure the build of the code:
-```
-cd ../../
-mkdir build
-cd build
-```
-- Ubuntu + OpenBLAS: `cmake .. -DCMAKE_BUILD_TYPE=Release -DRL_TOOLS_BACKEND_ENABLE_OPENBLAS:BOOL=ON`
-- Ubuntu + MKL: `cmake .. -DCMAKE_BUILD_TYPE=Release -DRL_TOOLS_BACKEND_ENABLE_MKL:BOOL=ON`
-- macOS (tested on Sonoma): `cmake .. -DCMAKE_BUILD_TYPE=Release`
-
-Finally, we can build the targets:
-```
-cmake --build . -j8
-```
-
-After successfully building the targets, we can run the code (in the original directory `learning_to_fly`):
-```
-cd ..
-./build/src/training_headless 
-```
-While this is running, you should be able to see training metrics using Tensorboard
-
-If not already installed:
-```
-python3 -m pip install tensorboard
-```
-Then from the original directory `learning_to_fly`:
-```
-tensorboard --logdir=logs
-```
-
-To run the training with the UI, we download the JavaScript dependencies in the form of the two files `three.module.js` and `OrbitControls.js`:
-```
-cd src/ui
-./get_dependencies.sh
-```
-
-After that we can execute the UI binary from the root folder:
-```
-cd ../../
-./build/src/ui 0.0.0.0 8000
-```
-Now you should be able to navigate to [http://0.0.0.0:8000](http://0.0.0.0:8000) in your browser and start the training.
-
-To run the benchmark (with UI, checkpointing and Tensorboard logging turned off):
-```
-sudo nice -n -20 ./build/src/training_benchmark
-```
 
 ## Deploying trained policies on a Crazyflie
 Train a policy, e.g. using the Docker image with the UI:
@@ -201,22 +221,4 @@ python3 scripts/trigger.py --mode trajectory_tracking --trajectory-scale 0.3
 
  Note: If you moved the Crazyflie it is best to restart it before flying (in the same position and orientation as for the intended take-off) because the policy targets to regulate the global yaw to `0`. If there is a large offset (e.g. `>90 degree`) this might trigger a strong response. 
 
-
-
-## Citing
-When using our code/setup in an academic work please cite our publication using the following Bibtex citation:
-```
-@ARTICLE{eschmann2024learning,
-  author={Eschmann, Jonas and Albani, Dario and Loianno, Giuseppe},
-  journal={IEEE Robotics and Automation Letters}, 
-  title={Learning to Fly in Seconds}, 
-  year={2024},
-  volume={},
-  number={},
-  pages={1-8},
-  keywords={Training;Quadrotors;Taxonomy;Complexity theory;Task analysis;Rotors;Motors;Aerial Systems: Applications;Machine Learning for Robot Control;Reinforcement Learning},
-  doi={10.1109/LRA.2024.3396025}
-}
-```
-
-
+</details>
