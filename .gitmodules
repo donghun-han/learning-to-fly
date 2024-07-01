@@ -3,4 +3,4 @@
 	url = https://github.com/google/googletest.git
 [submodule "external/rl_tools"]
 	path = external/rl_tools
-	url = https://github.com/rl-tools/rl-tools
+	url = git@github.com:donghun-han/rl_tools.git
